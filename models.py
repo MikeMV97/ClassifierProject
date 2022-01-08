@@ -122,7 +122,7 @@ class Models:
 			# Train model
 			grid_cv.fit(df_data, labels.values.ravel())
 
-			print(f'AFTER HYPER-PARAMETER TUNING \n')
+			# print(f'AFTER HYPER-PARAMETER TUNING \n')
 			# display the best parameters
 			print(grid_cv.best_params_)
 

@@ -4,7 +4,19 @@ from featuresHelper import FeaturesHelper
 from textTransformer import Transformer
 from models import Models
 
-if __name__ == '__main__':
+
+def test_model():
+	loader = Loader()
+	featHelper = FeaturesHelper()
+	model = Models()
+
+	clasfr = model.model_import('./models/SVC_model_0.8342.pkl')
+	test = loader.load_from_csv('./in_data/test_data.csv')
+	test_data = featHelper.add_features(test['article_text'])
+	y_pred = clasfr.predict(test_data)
+	model.plot_own_confusion_matrix(test['Category'], y_pred)
+
+def learning_pipeline():
 	print('Nuestro flujo de ML')
 
 	loader = Loader()
@@ -47,4 +59,9 @@ if __name__ == '__main__':
 	# train_data.drop(columns=['Category'], inplace=True)
 	learner.pipeline_learning(train_data, train['Category'], test_data, test['Category'])
 
+
 	# model.grid_training(X, y)
+
+if __name__ == '__main__':
+	# learning_pipeline()
+	test_model()
