@@ -1,21 +1,37 @@
 import joblib
 import numpy as np
+import pandas as pd
+from featuresHelper import FeaturesHelper
+from load import Loader
+import json
 
-from flask import Flask, jsonify
+from flask import Flask, Response
 
 app = Flask(__name__)
 
-
-# POSTMAN PARA PRUEBAS
 @app.route('/predict', methods=['GET'])
 def predict():
-    X_test = np.array(
-        [7.594444821, 7.479555538, 1.616463184, 1.53352356, 0.796666503, 0.635422587, 0.362012237, 0.315963835,
-         2.277026653])
-    prediction = model.predict(X_test.reshape(1, -1))  # 1,-1: Un Row, Infiere cuantos valores tiene el row
-    return jsonify({'prediccion': list(prediction)})
+    loader = Loader()
+    featHelper = FeaturesHelper()
+    test = loader.load_from_csv('./in_data/test_data.csv').iloc[1]
+    article_text = pd.Series(np.array([test['article_text']]))
+    features = featHelper.add_features(article_text)
+    prediction = model.predict(features)
+    features_list = features.values.tolist()[0]
+
+    js = {  'avg_word_len': features_list[1], 
+            'sentiment_txt': features_list[2], 
+            'num_words': features_list[3],
+            'num_diff_words': features_list[4],
+            'num_stopwords': features_list[5],
+            'rate_stopwords_words': features_list[6],
+            'rate_diffwords_words': features_list[7],
+            'prediction_result': int(prediction[0])
+        }
+        
+    return Response(json.dumps(js), mimetype='application/json')
 
 
 if __name__ == "__main__":
-    model = joblib.load('./models/best_model.pkl')
+    model = joblib.load('./models/SVC_model_0.8342.pkl')
     app.run(port=8080)
