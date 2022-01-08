@@ -1,0 +1,13 @@
+numpy
+pandas
+matplotlib
+nltk
+scikit-learn
+seaborn
+scipy
+joblib
+flask
+openpyxl
+sentiment_analysis_spanish
+stanza
+statsmodels
