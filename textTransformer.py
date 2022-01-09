@@ -4,6 +4,7 @@ import numpy as np
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 from stanza import Pipeline as stPipeline
+import stanza
 
 from string import punctuation
 import re
@@ -33,15 +34,15 @@ class Transformer:
 		return data
 
 	def lemmatization(self, col_text):
+		# stanza.download(lang='es') #, model_dir='PYTHON_RESOURCES/stanza_resources')
 		nlp = stPipeline('es', package='ancora', processors='tokenize,mwt,pos,lemma')
 		# , lemma_model_path='PYTHON_RESOURCES/stanza_resources/es/lemma/ancora_customized.pt')
 
 		col_text_lemma = col_text.apply(lambda txt: nlp(txt))
-
 		col_text_lemma = col_text_lemma.apply(
 			lambda doc_lemmatized: ' '.join([word.lemma for sent in doc_lemmatized.sentences for word in sent.words]))
-		# print(col_text_lemma)
-
+		# print(col_text_lemma)	
+		
 		return col_text_lemma
 
 	def symbols_to_remove(self):
