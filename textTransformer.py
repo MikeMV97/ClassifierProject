@@ -22,7 +22,7 @@ class Transformer:
 		# loader.save_to_csv(data, './in_data/development.csv')
 		# print(data)
 		data['article_text'] = data['article_text'].apply(lambda txt: re.sub(r'[^\wñ\s]', r'',
-																	   txt
+																	   str(txt)
 																	   , 0, re.I))
 		# unicodedata.normalize("NFKD", txt).encode('ascii', 'ignore').decode('utf8')
 					# r"([^n\u0300-\u036f]|n(?!\u0303(?![\u0300-\u036f])))[\u0300-\u036f]+", r"\1",
