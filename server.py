@@ -2,19 +2,17 @@ import joblib
 import numpy as np
 import pandas as pd
 from featuresHelper import FeaturesHelper
-from load import Loader
 import json
 
-from flask import Flask, Response
+from flask import Flask, Response, request
 
 app = Flask(__name__)
 
-@app.route('/predict', methods=['GET'])
+@app.route('/predict', methods=['POST'])
 def predict():
-    loader = Loader()
+    request_data = request.get_json()
     featHelper = FeaturesHelper()
-    test = loader.load_from_csv('./in_data/test_data.csv').iloc[1]
-    article_text = pd.Series(np.array([test['article_text']]))
+    article_text = pd.Series(np.array([request_data['article_text']]))
     features = featHelper.add_features(article_text)
     prediction = model.predict(features)
     features_list = features.values.tolist()[0]
