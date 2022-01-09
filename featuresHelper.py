@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+import nltk
+import stanza
 from nltk.corpus import stopwords
 from nltk import tokenize
 from nltk import bigrams
@@ -8,12 +10,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sentiment_analysis_spanish import sentiment_analysis
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import seaborn as sns
 
 from textTransformer import Transformer
 
+nltk.download('stopwords')
+stanza.download('es')
 
 class FeaturesHelper:
 	def __init__(self):
@@ -65,114 +66,12 @@ class FeaturesHelper:
 		# remove stop_words_es
 		data_feat['article_text'] = data_feat['article_text'].apply(lambda txt: ' '.join(transformer.remove_stopwords(txt)))
 		# data_feat.drop(columns=['article_text_sp'], inplace=True)
-		print(data_feat['article_text'])
 
 		return data_feat
-
-	def plot_distr_cols(self, data):
-		fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(6.5, 5.5))
-		axes = axes.flat
-
-		print( min(data['sentiment_txt']), max(data['sentiment_txt']))
-		for i, column in enumerate(self.columns_numeric):
-			# print( i , column)
-			if column == 'sentiment_txt':
-				i += 1
-				sns.histplot(
-					data=np.log(data[self.columns_numeric]),
-					x=column,
-					stat="count",
-					kde=True,
-					color=(list(plt.rcParams['axes.prop_cycle']) * 2)[i]["color"],
-					line_kws={'linewidth': 1.5},
-					alpha=0.3,
-					ax=axes[i]
-				)
-			else:
-				sns.histplot(
-					data=data,
-					x=column,
-					stat="count",
-					kde=True,
-					color=(list(plt.rcParams['axes.prop_cycle']) * 2)[i]["color"],
-					line_kws={'linewidth': 1.5},
-					alpha=0.3,
-					ax=axes[i]
-				)
-			axes[i].set_title(column, fontsize=7, fontweight="bold")
-			axes[i].tick_params(labelsize=6)
-			axes[i].set_xlabel("")
-		for i in [6, 8]:
-			fig.delaxes(axes[i])
-		fig.tight_layout()
-		plt.subplots_adjust(top=0.9)
-		fig.suptitle('Distribución variables numéricas', fontsize=10, fontweight="bold")
-		plt.show()
-
-	def plot_distr_corr(self, data, y):
-		fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(6, 5))
-		axes = axes.flat
-
-		for i, column in enumerate(self.columns_numeric):
-			if column == 'sentiment_txt':
-				i += 1
-			sns.regplot(
-				x=data[column],
-				y=y,
-				data=data,
-				color="gray",
-				marker='.',
-				scatter_kws={"alpha": 0.4},
-				line_kws={"color": "b", "alpha": 0.7},
-				logistic=True,
-				ax=axes[i]
-			)
-			axes[i].set_title(f"Category vs {column}", fontsize=7, fontweight="bold")
-			# axes[i].ticklabel_format(style='sci', scilimits=(-4,4), axis='both')
-			axes[i].yaxis.set_major_formatter(ticker.EngFormatter())
-			axes[i].xaxis.set_major_formatter(ticker.EngFormatter())
-			axes[i].tick_params(labelsize=6)
-			# axes[i].set_xlabel("")
-			axes[i].set_ylabel("Categoría")
-
-		# Se eliminan los axes vacíos
-		for i in [6, 8]:
-			fig.delaxes(axes[i])
-
-		fig.tight_layout()
-		plt.subplots_adjust(top=0.9)
-		fig.suptitle('Correlación con categoria', fontsize=10, fontweight="bold")
-		plt.show()
-
-	def plot_corr_matrix(self, data):
-		corr_matrix = data[self.columns_numeric].corr(method='pearson')
-		fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4))
-
-		sns.heatmap(
-			corr_matrix,
-			annot=True,
-			cbar=True,
-			annot_kws={"size": 10},
-			vmin=-1,
-			vmax=1,
-			center=0,
-			cmap=sns.diverging_palette(20, 220, n=200),
-			square=True,
-			ax=ax,
-		)
-		ax.set_xticklabels(
-			ax.get_xticklabels(),
-			rotation=45,
-			horizontalalignment='right',
-		)
-		ax.tick_params(labelsize=8)
-		fig.suptitle('Matriz de correlaciones', fontsize=10, fontweight="bold")
-		plt.show()
 
 	def get_tfidf(self, col_article_text):
 		bigrams_txt = self.generate_bigrams(col_article_text)
 		# print(*map(' '.join, bigrams_txt[0]), sep=', ')
-		print(type(bigrams_txt))
 		tfidf_vectorizer = TfidfVectorizer(ngram_range=(1, 2))  # min_df=2, max_df=0.8,
 		features = tfidf_vectorizer.fit_transform(bigrams_txt.to_frame())
 

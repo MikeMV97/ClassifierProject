@@ -82,7 +82,6 @@ class Transformer:
 					counts = counts + 1
 			# elif not np.isnan(field):
 			# counts = counts + 1
-			print(colu, counts)
 
 	def filter_corpus_posadas(self, df):
 		corpus = df[df['Topic'] == 'Politics']

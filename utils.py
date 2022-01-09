@@ -17,15 +17,3 @@ class Utils:
         class_counts = self.get_class_counts(df)
         return {val[0]: round(val[1]/df.shape[0], 4) for val in class_counts.items()}
 
-     # TODO: Obtener una mejor reparticion de los datos a traves de stratify
-    def traint_test(self, df):
-        train, test = train_test_split(df, test_size=0.2, stratify=df['Category'])
-        map_proportions = self.get_class_proportions(train)
-        delta, count = 0.009, 1
-        while abs(map_proportions[0] - 0.5327) > delta:
-            train, test = train_test_split(df, test_size=0.2, stratify=df['Category'])
-            map_proportions = self.get_class_proportions(train)
-            count += 1
-        # Tenemos una buena separacion de los datos...
-        print( count )
-        return train, test
