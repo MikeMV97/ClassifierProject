@@ -7,6 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.cluster import KMeans
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, make_scorer, fbeta_score, roc_auc_score, roc_curve, auc
 from sklearn.model_selection import GridSearchCV
@@ -23,6 +24,11 @@ from column_selector import TextColumnSelector, NumColumnSelector, DenseTransfor
 class Models:
 
 	def __init__(self):
+		# pipeline to process num_diff_words column
+		self.num_diff_words = Pipeline([
+			('selector', NumColumnSelector(key='num_diff_words')),
+			('scaler', StandardScaler())
+		])
 		# pipeline to process rate_stopwords_words column
 		self.rate_words = Pipeline([
 			('selector', NumColumnSelector(key='rate_stopwords_words')),
@@ -50,11 +56,12 @@ class Models:
 
 		# process all the pipelines in parallel using feature union
 		self.all_features = FeatureUnion([
+			# ('num_diff_words', self.num_diff_words),
 			('rate_words', self.rate_words),
 			('rate_diffwords', self.rate_diffwords),
 			('avg_word_length', self.avg_word_length),
-			('article_tfidf', self.article_tfidf),
-			('sentiment_txt', self.sentiment_txt)
+			('article_tfidf', self.article_tfidf)
+			#, ('sentiment_txt', self.sentiment_txt)
 		])
 
 		self.classifiers = {
@@ -64,6 +71,10 @@ class Models:
 				# {'all_features__article_tfidf__tfidf__analyzer': 'char_wb', 'all_features__article_tfidf__tfidf__max_df': 1.0,
 				# 'all_features__article_tfidf__tfidf__ngram_range': (8, 8), 'svc__C': 10, 'svc__coef0': 4, 'svc__degree': 5,
 				# 'svc__gamma': 'auto', 'svc__kernel': 'poly'}
+			]),
+			'KMEANS': Pipeline([
+				('all_features', self.all_features),
+				('kmeans', KMeans())
 			]),
 			'BAYES': Pipeline([
 				('all_features', self.all_features),
@@ -93,8 +104,16 @@ class Models:
 				'svc__gamma': ['auto'],  # , 'scale'
 				'svc__coef0': [-4, -2, 0, 2, 4]
 			},
+			'KMEANS': {
+				'all_features__article_tfidf__tfidf__analyzer': ['word'],
+				'all_features__article_tfidf__tfidf__max_df': [1.0, 0.95, 0.8],
+				'all_features__article_tfidf__tfidf__min_df': [1, 3, 5],
+				'all_features__article_tfidf__tfidf__ngram_range': [(1, 2), (2, 3)],
+				'kmeans__n_clusters': [2, 4, 6],
+				'kmeans__random_state': [42]
+			},
 			'BAYES': {
-				'all_features__article_tfidf__tfidf__max_df': [0.5, 0.75, 1.0],
+				'all_features__article_tfidf__tfidf__max_df': [0.75, 0.8, 1.0],
 				'all_features__article_tfidf__tfidf__ngram_range': [(1, 1), (1, 2), (2, 2)]
 			},
 			'VOTING': {
@@ -132,7 +151,7 @@ class Models:
 
 			# save the model to disk
 			self.model_export(grid_cv.best_estimator_,
-							  './models/' + name_clf + '_model_' + str(round(grid_cv.best_score_, 4)) + '.pkl')
+							  'models/' + name_clf + '_model_' + str(round(grid_cv.best_score_, 4)) + '.pkl')
 
 			# Making the Confusion Matrix
 			# plot_confusion_matrix(grid_cv, df_test, labels_test.values.ravel())

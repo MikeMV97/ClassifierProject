@@ -226,4 +226,23 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Mike 
+.venvWin
+.idea
+__pycache__
+venvWin/
+.idea/*
+__pycache__/*
+PYTHON_RESOURCES/
+in_data/development.*
+in_data/felicidad.*
+in_data/*.xlsx
+in_data/*.pkl
+models/best_model.pkl
+models/SVC_model_0.7*
+models/KMEANS*
+models/BAYES*
+models/VOTING*
+out_graphs/nota.txt
+
 # End of https://www.toptal.com/developers/gitignore/api/python,windows,macos,linux
