@@ -15,6 +15,9 @@ class Transformer:
 
 	def __init__(self):
 		self.stop_words_es = set(stopwords.words('spanish'))
+		# stanza.download(lang='es') #, model_dir='PYTHON_RESOURCES/stanza_resources')
+		self.nlp = stPipeline('es', package='ancora', processors='tokenize,mwt,pos,lemma')
+		# , lemma_model_path='PYTHON_RESOURCES/stanza_resources/es/lemma/ancora_customized.pt')
 
 	def prepare_data(self, data):
 		# self.check_null_columns(data)
@@ -34,17 +37,60 @@ class Transformer:
 		return data
 
 	def lemmatization(self, col_text):
-		# stanza.download(lang='es') #, model_dir='PYTHON_RESOURCES/stanza_resources')
-		nlp = stPipeline('es', package='ancora', processors='tokenize,mwt,pos,lemma')
-		# , lemma_model_path='PYTHON_RESOURCES/stanza_resources/es/lemma/ancora_customized.pt')
 
-		col_text_lemma = col_text.apply(lambda txt: nlp(txt))
+		col_text_lemma = col_text.apply(lambda txt: self.nlp(txt))
+		# print(*[f'word: {word.text}\tupos: {word.upos}\txpos: {word.xpos}\tfeats: {word.feats if word.feats else "_"}' for text in col_text_lemma for sent in text.sentences for word in sent.words], sep='\n')
 		col_text_lemma = col_text_lemma.apply(
 			lambda doc_lemmatized: ' '.join([word.lemma for sent in doc_lemmatized.sentences for word in sent.words]))
 		# print(col_text_lemma)	
 		
 		return col_text_lemma
 
+	def nlp_process(self, col_text):
+		doc_analized = col_text.apply(lambda txt: self.nlp(txt))
+		return doc_analized
+
+	def lemmatization_feature(self, docs_nlp):
+		col_text_lemma = docs_nlp.apply(
+			lambda doc: ' '.join([word.lemma for sent in doc.sentences for word in sent.words]))
+		return col_text_lemma
+
+	def pronouns_count(self, col_text):
+		counts = col_text.apply(
+			lambda doc: sum([1 for sent in doc.sentences for word in sent.words if word.upos == 'PRON'])
+		)
+		return counts
+
+	def adjectives_count(self, col_text):
+		counts = col_text.apply(
+			lambda doc: sum([1 for sent in doc.sentences for word in sent.words if word.upos == 'ADJ'])
+		)
+		return counts
+
+	def propernoun_count(self, col_text):
+		counts = col_text.apply(
+			lambda doc: sum([1 for sent in doc.sentences for word in sent.words if word.upos == 'PROPN'])
+		)
+		return counts
+
+	def noun_count(self, col_text):
+		counts = col_text.apply(
+			lambda doc: sum([1 for sent in doc.sentences for word in sent.words if word.upos == 'NOUN'])
+		)
+		return counts
+
+	def verb_count(self, col_text):
+		counts = col_text.apply(
+			lambda doc: sum([1 for sent in doc.sentences for word in sent.words if word.upos == 'VERB'])
+		)
+		return counts
+
+	def adverb_count(self, col_text):
+		counts = col_text.apply(
+			lambda doc: sum([1 for sent in doc.sentences for word in sent.words if word.upos == 'ADV'])
+		)
+		return counts
+		
 	def symbols_to_remove(self):
 		non_words = list(punctuation)
 		non_words.extend(['¿', '¡', '*'])

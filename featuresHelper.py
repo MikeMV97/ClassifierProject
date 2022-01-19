@@ -18,7 +18,8 @@ from textTransformer import Transformer
 class FeaturesHelper:
 	def __init__(self):
 		self.columns_numeric = ['num_words', 'num_diff_words', 'num_stopwords', 'avg_word_len', 'rate_stopwords_words',
-						   'rate_diffwords_words', 'sentiment_txt']
+						   'rate_diffwords_words', 'rate_pron', 'rate_adj', 'rate_adv', 'rate_noun', 'rate_verb', 
+						   'rate_propn', 'sentiment_txt']
 
 	def add_features(self, data_txt):
 		transformer = Transformer()
@@ -27,10 +28,12 @@ class FeaturesHelper:
 		data_feat = pd.DataFrame(data_txt, columns=['article_text'])		# df.rename(columns={"A": "a"})
 		data_feat['article_text'] = transformer.prepare_data(data_feat)
 
-		# Lemmatization of article text
-		data_feat['article_text'] = transformer.lemmatization(data_feat['article_text'])
+		# PROCESS Lemmatization of article text
+		data_feat['txt_nlp']     = transformer.nlp_process(data_feat['article_text'])
+		data_feat['article_text']   = transformer.lemmatization_feature(data_feat['txt_nlp'])
+		# data_feat['article_text'] = transformer.lemmatization(data_feat['article_text'])
 
-		# average word length
+		# GET average word length
 		data_feat['avg_word_len'] = data_feat['article_text'].apply(
 			lambda x: np.mean([len(t) for t in x.split() if t not in stop_words_es]))
 			# if len([len(t) for t in x.split() if t not in stop_words_es]) > 0 else 0
@@ -41,36 +44,58 @@ class FeaturesHelper:
 
 		# data_feat['word_count'] = get_word_count(data_feat['article_text_nosw'])
 
-		# number of words in each message
+		# GET number of words in each message:
 		data_feat['num_words'] = data_feat['article_text'].apply(lambda x: len(x.split()))
 		data_feat['num_words'] = data_feat['num_words'].astype('int32')
 
-		# number of words in each message
+		# GET number of words in each message:
 		data_feat['num_diff_words'] = data_feat['article_text'].apply(lambda x: len(set(x.split())))
 		data_feat['num_diff_words'] = data_feat['num_diff_words'].astype('int32')
 
-		# get the number of non stopwords in each message
+		# GET the number of non stopwords in each message:
 		data_feat['num_stopwords'] = data_feat['article_text'].apply(
 			lambda txt: len([word for word in txt.split() if word in stop_words_es]))
 		data_feat['num_stopwords'] = data_feat['num_stopwords'].astype('int32')
 
+		# COUNTS of Part-Of-Speech & Morphological Features:
+		data_feat['pron_counts'] = transformer.pronouns_count(data_feat['txt_nlp'])
+		data_feat['adj_counts']  = transformer.adjectives_count(data_feat['txt_nlp'])
+		data_feat['adv_counts']  = transformer.adverb_count(data_feat['txt_nlp'])
+		data_feat['noun_counts'] = transformer.noun_count(data_feat['txt_nlp'])
+		data_feat['verb_counts'] = transformer.verb_count(data_feat['txt_nlp'])
+		data_feat['propn_counts'] = transformer.propernoun_count(data_feat['txt_nlp'])
+
+		# RATES of Counts' features:
 		data_feat['rate_stopwords_words'] = data_feat['num_stopwords'] / data_feat['num_words']
 		data_feat['rate_diffwords_words'] = data_feat['num_diff_words'] / data_feat['num_words']
+		data_feat['rate_pron'] = data_feat['pron_counts'] / data_feat['num_words']
+		data_feat['rate_adj'] = data_feat['adj_counts'] / data_feat['num_words']
+		data_feat['rate_adv'] = data_feat['adv_counts'] / data_feat['num_words']
+		data_feat['rate_noun'] = data_feat['noun_counts'] / data_feat['num_words']
+		data_feat['rate_verb'] = data_feat['verb_counts'] / data_feat['num_words']
+		data_feat['rate_propn'] = data_feat['propn_counts'] / data_feat['num_words']
 		data_feat['rate_stopwords_words'] = data_feat['rate_stopwords_words'].astype('float32')
 		data_feat['rate_diffwords_words'] = data_feat['rate_diffwords_words'].astype('float32')
+		data_feat['rate_pron'] = data_feat['rate_pron'].astype('float32')
+		data_feat['rate_adj'] = data_feat['rate_adj'].astype('float32')
+		data_feat['rate_adv'] = data_feat['rate_adv'].astype('float32')
+		data_feat['rate_noun'] = data_feat['rate_noun'].astype('float32')
+		data_feat['rate_verb'] = data_feat['rate_verb'].astype('float32')
+		data_feat['rate_propn'] = data_feat['rate_propn'].astype('float32')
 
-		# data_feat['tfidf_txt'] = get_tfidf(data_feat['article_text_sp'])
+		# data_feat['tfidf_txt'] = get_tfidf(data_feat['article_text_sp']) # Now this is part of a Pipeline
 		# print(data_feat['tfidf_txt'])
 
-		# remove stop_words_es
+		# REMOVE stop_words_es:
 		data_feat['article_text'] = data_feat['article_text'].apply(lambda txt: ' '.join(transformer.remove_stopwords(txt)))
 		# data_feat.drop(columns=['article_text_sp'], inplace=True)
-		print(data_feat['article_text'])
+		data_feat.drop(columns=['pron_counts', 'adj_counts', 'adv_counts', 'noun_counts', 'verb_counts', 'propn_counts'], inplace=True)
+		# print(data_feat['article_text'])
 
 		return data_feat
 
 	def plot_distr_cols(self, data):
-		fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(6.5, 5.5))
+		fig, axes = plt.subplots(nrows=5, ncols=3, figsize=(9, 5.5))
 		axes = axes.flat
 
 		print( min(data['sentiment_txt']), max(data['sentiment_txt']))
@@ -78,7 +103,7 @@ class FeaturesHelper:
 			# print( i , column)
 			if column == 'sentiment_txt':
 				i += 1
-				sns.histplot(
+				ax = sns.histplot(
 					data=np.log(data[self.columns_numeric]),
 					x=column,
 					stat="count",
@@ -88,8 +113,9 @@ class FeaturesHelper:
 					alpha=0.3,
 					ax=axes[i]
 				)
+				ax.set(ylabel='Conteo')
 			else:
-				sns.histplot(
+				ax = sns.histplot(
 					data=data,
 					x=column,
 					stat="count",
@@ -99,10 +125,11 @@ class FeaturesHelper:
 					alpha=0.3,
 					ax=axes[i]
 				)
+				ax.set(ylabel='Conteo')
 			axes[i].set_title(column, fontsize=7, fontweight="bold")
 			axes[i].tick_params(labelsize=6)
 			axes[i].set_xlabel("")
-		for i in [6, 8]:
+		for i in [12, 14]:
 			fig.delaxes(axes[i])
 		fig.tight_layout()
 		plt.subplots_adjust(top=0.9)
@@ -110,7 +137,7 @@ class FeaturesHelper:
 		plt.show()
 
 	def plot_distr_corr(self, data, y):
-		fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(6, 5))
+		fig, axes = plt.subplots(nrows=5, ncols=3, figsize=(8, 5))
 		axes = axes.flat
 
 		for i, column in enumerate(self.columns_numeric):
@@ -136,7 +163,7 @@ class FeaturesHelper:
 			axes[i].set_ylabel("Categoría")
 
 		# Se eliminan los axes vacíos
-		for i in [6, 8]:
+		for i in [12, 14]:
 			fig.delaxes(axes[i])
 
 		fig.tight_layout()
@@ -144,15 +171,15 @@ class FeaturesHelper:
 		fig.suptitle('Correlación con categoria', fontsize=10, fontweight="bold")
 		plt.show()
 
-	def plot_corr_matrix(self, data):
+	def plot_corr_matrix(self, data, annot_size: int):
 		corr_matrix = data[self.columns_numeric].corr(method='pearson')
-		fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4))
+		fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 8))
 
 		sns.heatmap(
 			corr_matrix,
 			annot=True,
 			cbar=True,
-			annot_kws={"size": 10},
+			annot_kws={"size": annot_size},
 			vmin=-1,
 			vmax=1,
 			center=0,
