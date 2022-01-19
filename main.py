@@ -10,11 +10,15 @@ def test_model():
 	featHelper = FeaturesHelper()
 	model = Models()
 
-	clasfr = model.model_import('./models/SVC_model_0.8342.pkl')
+	# clasfr = model.model_import('./models/SVC_model_0.8342.pkl')
+	# clasfr = model.model_import('./models/SVC_model_0.8169.pkl')
+	clasfr = model.model_import('./models/VOTING_model_0.7608.pkl')
+	print(clasfr.get_params())
 	test = loader.load_from_csv('./in_data/test_data.csv')
 	test_data = featHelper.add_features(test['article_text'])
 	y_pred = clasfr.predict(test_data)
-	model.plot_own_confusion_matrix(test['Category'], y_pred)
+	# model.plot_own_confusion_matrix(test['Category'], y_pred)
+	model.plot_roc(test['Category'], y_pred)
 
 def learning_pipeline():
 	print('Nuestro flujo de ML')
@@ -22,7 +26,7 @@ def learning_pipeline():
 	loader = Loader()
 	util = Utils()
 	featHelper = FeaturesHelper()
-	transformer = Transformer()
+	# transformer = Transformer()
 	learner = Models()
 
 	# data = loader.load_from_xlsx('./in_data/train.xlsx')
@@ -36,8 +40,12 @@ def learning_pipeline():
 	# X, y = util.features_target(data, ['Link'], ['Category'])
 	# print(X.info())
 	# print(y.info())
+	print('Datos de Entrenamiento:')
 	print('Dataset class counts: ', util.get_class_counts(train))
 	print('Dataset class proportions: ', util.get_class_proportions(train))
+	print('Datos de prueba:')
+	print('Dataset class counts: ', util.get_class_counts(test))
+	print('Dataset class proportions: ', util.get_class_proportions(test))
 	# print (test['Category'])
 	train_data = featHelper.add_features(train['article_text'])
 	test_data = featHelper.add_features(test['article_text'])
@@ -51,10 +59,10 @@ def learning_pipeline():
 
 	# featHelper.plot_distr_cols(train_data)
 	# featHelper.plot_distr_corr(train_data, train['Category'])
-	# featHelper.plot_corr_matrix(train_data)
+	# featHelper.plot_corr_matrix(train_data, 8)
 
 	# print( train_data['article_text'])
-	print(train_data.columns)
+	# print(train_data.columns)
 	# train_data_cate = train['Category']
 	# train_data.drop(columns=['Category'], inplace=True)
 	learner.pipeline_learning(train_data, train['Category'], test_data, test['Category'])
@@ -63,5 +71,5 @@ def learning_pipeline():
 	# model.grid_training(X, y)
 
 if __name__ == '__main__':
-	# learning_pipeline()
-	test_model()
+	learning_pipeline()
+	# test_model()

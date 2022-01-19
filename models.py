@@ -53,6 +53,37 @@ class Models:
 		self.sentiment_txt = Pipeline([
 			('selector', NumColumnSelector(key='sentiment_txt'))
 		])
+		# pipeline to process rate_pron column
+		self.rate_pron = Pipeline([
+			('selector', NumColumnSelector(key='rate_pron')),
+			('scaler', StandardScaler())
+		])
+		# pipeline to process rate_adj column
+		self.rate_adj = Pipeline([
+			('selector', NumColumnSelector(key='rate_adj')),
+			('scaler', StandardScaler())
+		])
+		# pipeline to process rate_adv column
+		self.rate_adv = Pipeline([
+			('selector', NumColumnSelector(key='rate_adv')),
+			('scaler', StandardScaler())
+		])
+		# pipeline to process rate_noun column
+		self.rate_noun = Pipeline([
+			('selector', NumColumnSelector(key='rate_noun')),
+			('scaler', StandardScaler())
+		])
+		# pipeline to process rate_verb column
+		self.rate_verb = Pipeline([
+			('selector', NumColumnSelector(key='rate_verb')),
+			('scaler', StandardScaler())
+		])
+		# pipeline to process rate_propn column
+		self.rate_propn = Pipeline([
+			('selector', NumColumnSelector(key='rate_propn')),
+			('scaler', StandardScaler())
+		])
+
 
 		# process all the pipelines in parallel using feature union
 		self.all_features = FeatureUnion([
@@ -62,6 +93,13 @@ class Models:
 			('avg_word_length', self.avg_word_length),
 			('article_tfidf', self.article_tfidf)
 			#, ('sentiment_txt', self.sentiment_txt)
+			,
+			('rate_pron', self.rate_pron), 
+			# ('rate_adj', self.rate_adj), 
+			('rate_adv', self.rate_adv), 
+			('rate_noun', self.rate_noun), 
+			('rate_verb', self.rate_verb)
+			# ('rate_propn', self.rate_propn)
 		])
 
 		self.classifiers = {
@@ -87,6 +125,13 @@ class Models:
 					estimators=[
 						('svc', SVC()), ('dtree', DecisionTreeClassifier()), ('gradient', GradientBoostingClassifier())
 					], voting='soft'))
+			]),
+			'VOTING2': Pipeline([
+				('all_features', self.all_features),
+				('clasfs', VotingClassifier(
+					estimators=[
+						(('svc1', SVC()), ('svc2', SVC()), ('svc3', SVC()))
+					], voting='soft'))
 			])
 		}
 
@@ -94,12 +139,12 @@ class Models:
 			'SVC': {
 				# analyzer='word', max_df=0.95, min_df=5, ngram_range=(1, 2)
 				'all_features__article_tfidf__tfidf__analyzer': ['word'],  # ['char', 'char_wb']
-				'all_features__article_tfidf__tfidf__max_df': [1.0, 0.95, 0.8],
+				'all_features__article_tfidf__tfidf__max_df': [0.95, 0.8, 0.75], # 1.0,
 				'all_features__article_tfidf__tfidf__min_df': [1, 3, 5],  # , 10: Warning because very long
-				'all_features__article_tfidf__tfidf__ngram_range': [(1, 2), (7, 7), (7, 8), (8, 8)],
+				'all_features__article_tfidf__tfidf__ngram_range': [(1, 2), (2, 2), (2, 3)], # , (7, 7), (7, 8), (8, 8)
 				# (1, 1), (1, 2), (2, 2), (4, 4), (5, 5),
 				'svc__kernel': ['rbf', 'poly', 'linear', 'sigmoid'],  #
-				'svc__C': [0.5, 1, 5, 10],
+				'svc__C': [3, 5, 7], # 0.5, 1,   , 10
 				'svc__degree': [2, 3, 4, 5],
 				'svc__gamma': ['auto'],  # , 'scale'
 				'svc__coef0': [-4, -2, 0, 2, 4]
@@ -126,6 +171,30 @@ class Models:
 				'clasfs__svc__probability': [True],
 				'clasfs__dtree__min_samples_leaf': [1, 2],
 				'clasfs__gradient__n_estimators': [65, 90],
+			},
+			'VOTING2': {
+				'all_features__article_tfidf__tfidf__analyzer': ['word'],
+				'all_features__article_tfidf__tfidf__max_df': [0.9, 0.8, 0.75],
+				'all_features__article_tfidf__tfidf__min_df': [1, 5, 10],
+				'all_features__article_tfidf__tfidf__ngram_range': [(1, 2), (2, 3)],
+				'clasfs__svc1__kernel': ['rbf', 'poly', 'linear'],
+				'clasfs__svc1__C': [3, 5, 7],
+				'clasfs__svc1__degree': [3, 4, 5],
+				'clasfs__svc1__gamma': ['auto'],
+				'clasfs__svc1__coef0': [-2, 0, 2],
+				'clasfs__svc1__probability': [True],
+				'clasfs__svc2__kernel': ['rbf', 'poly', 'sigmoid'],
+				'clasfs__svc2__C': [3, 5, 7, 9],
+				'clasfs__svc2__degree': [2, 3, 4, 5],
+				'clasfs__svc2__gamma': ['auto'], 
+				'clasfs__svc2__coef0': [-4, -2, 0, 2, 4],
+				'clasfs__svc2__probability': [True],
+				'clasfs__svc3__kernel': ['rbf', 'linear', 'sigmoid'],
+				'clasfs__svc3__C': [4, 5, 6],
+				'clasfs__svc3__degree': [2, 3, 4],
+				'clasfs__svc3__gamma': ['auto'], 
+				'clasfs__svc3__coef0': [-4, -2, 0, 2, 4],
+				'clasfs__svc3__probability': [True]
 			}
 		}
 
@@ -221,7 +290,7 @@ class Models:
 		ax2.set_ylim([thresholds[-1], thresholds[0]])
 		ax2.set_xlim([fpr[0], fpr[-1]])
 
-		print(plt.figure())
+		plt.show()
 
 
 	def print_metrics(self, labels, y_pred):
