@@ -88,18 +88,18 @@ class Models:
 		# process all the pipelines in parallel using feature union
 		self.all_features = FeatureUnion([
 			# ('num_diff_words', self.num_diff_words),
-			('rate_words', self.rate_words),
+			('rate_words', self.rate_words),	# Este es el 1er candidato a retirar.
 			('rate_diffwords', self.rate_diffwords),
 			('avg_word_length', self.avg_word_length),
 			('article_tfidf', self.article_tfidf)
 			#, ('sentiment_txt', self.sentiment_txt)
 			,
 			('rate_pron', self.rate_pron), 
-			# ('rate_adj', self.rate_adj), 
+			# ('rate_adj', self.rate_adj), # Por Correlacion vs Categoria, se elimino
 			('rate_adv', self.rate_adv), 
-			('rate_noun', self.rate_noun), 
+			('rate_noun', self.rate_noun), # Este es el 2do candidato a Retirar. Aunque no tiene Coor reelevante con otras features
 			('rate_verb', self.rate_verb)
-			# ('rate_propn', self.rate_propn)
+			# ('rate_propn', self.rate_propn) # Corr vs Categoria, parece no ser relevante. Tiene CORR Moderada con 3 features, Alta con RateStopwords
 		])
 
 		self.classifiers = {
