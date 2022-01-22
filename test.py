@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from IPython.display import display
+import statsmodels.api as sm
 import time
 from featuresHelper import FeaturesHelper
 from textTransformer import Transformer
@@ -20,7 +21,7 @@ def backwardElimination(x, Y, sl, columns):
                     x = x.loc[:, columns]
                     
     print('\nSelect {:d} features from {:d} by best p-values.'.format(len(columns), ini))
-    print('The max p-value from the features selecte is {:.3f}.'.format(maxVar))
+    print('The max p-value from the features selected is {:.3f}.'.format(maxVar))
     print(regressor.summary())
     
     # odds ratios and 95% CI
@@ -34,9 +35,16 @@ def backwardElimination(x, Y, sl, columns):
 
 def test_pvalues(df, y_train):
     featuresHelper = FeaturesHelper()
-    pv_cols = featuresHelper.columns_numeric.values
+    pv_cols = featuresHelper.columns_numeric
+    df_feat = featuresHelper.add_features(df)
+    features = df_feat.drop(columns=['article_text', 'txt_nlp'])
+    # X = np.asarray(features)
+    # y = np.asarray(y_train)
+    print(df_feat.info())
+    # print(y_train.info())
+
     SL = 0.051
-    pv_cols, LR = backwardElimination(df, y_train, SL, pv_cols)
+    pv_cols, LR = backwardElimination(features, y_train, SL, pv_cols)
     print('pv_cols:', pv_cols)
     print('Linear Regressor:', LR)
 
@@ -52,39 +60,42 @@ if __name__ == '__main__':
     data = loader.load_from_csv('./in_data/test_data.csv')
 
     text = pd.DataFrame(data, columns=['article_text'])
-    # print(text)
-    text['article_text'] = transformer.prepare_data(text)
-    # doc_proc = transformer.lemmatization(text['article_text'])
-    text['num_words'] = text['article_text'].apply(lambda x: len(x.split()))
 
-    text['txt_nlp']     = transformer.nlp_process(text['article_text'])
-    text['txt_lemmatized']   = transformer.lemmatization_feature(text['txt_nlp'])
-    text['pron_counts'] = transformer.pronouns_count(text['txt_nlp'])
-    text['adj_counts']  = transformer.adjectives_count(text['txt_nlp'])
-    text['adv_counts']  = transformer.adverb_count(text['txt_nlp'])
-    text['noun_counts'] = transformer.noun_count(text['txt_nlp'])
-    text['verb_counts'] = transformer.verb_count(text['txt_nlp'])
-    text['propn_counts'] = transformer.propernoun_count(text['txt_nlp'])
-    
-    # start = time.time()
-    # text['rate_pron'] = np.divide(text['pron_counts'] , text['num_words'])
-    # text['rate_adj'] = np.divide(text['adj_counts'] , text['num_words'])
-    # text['rate_adv'] = np.divide(text['adv_counts'] , text['num_words'])
-    # text['rate_noun'] = np.divide(text['noun_counts'] , text['num_words'])
-    # text['rate_verb'] = np.divide(text['verb_counts'] , text['num_words'])
-    # text['rate_propn'] = np.divide(text['propn_counts'], text['num_words'])
-    # end = time.time()
-    # print('Division time with numpy:', end - start)
-    # # On several tries, Pandas was at least x5 times faster than numpy in this case
-    # start = time.time()
-    text['rate_pron'] = text['pron_counts'] / text['num_words']
-    text['rate_adj'] = text['adj_counts'] / text['num_words']
-    text['rate_adv'] = text['adv_counts'] / text['num_words']
-    text['rate_noun'] = text['noun_counts'] / text['num_words']
-    text['rate_verb'] = text['verb_counts'] / text['num_words']
-    text['rate_propn'] = text['propn_counts'] / text['num_words']
-    # end = time.time()
-    # print('Division time with pandas:', end - start)
+    test_pvalues(df=text, y_train=data['Category'])
+
+    # # print(text)
+    # text['article_text'] = transformer.prepare_data(text)
+    # # doc_proc = transformer.lemmatization(text['article_text'])
+    # text['num_words'] = text['article_text'].apply(lambda x: len(x.split()))
+    #
+    # text['txt_nlp']     = transformer.nlp_process(text['article_text'])
+    # text['txt_lemmatized']   = transformer.lemmatization_feature(text['txt_nlp'])
+    # text['pron_counts'] = transformer.pronouns_count(text['txt_nlp'])
+    # text['adj_counts']  = transformer.adjectives_count(text['txt_nlp'])
+    # text['adv_counts']  = transformer.adverb_count(text['txt_nlp'])
+    # text['noun_counts'] = transformer.noun_count(text['txt_nlp'])
+    # text['verb_counts'] = transformer.verb_count(text['txt_nlp'])
+    # text['propn_counts'] = transformer.propernoun_count(text['txt_nlp'])
+    #
+    # # start = time.time()
+    # # text['rate_pron'] = np.divide(text['pron_counts'] , text['num_words'])
+    # # text['rate_adj'] = np.divide(text['adj_counts'] , text['num_words'])
+    # # text['rate_adv'] = np.divide(text['adv_counts'] , text['num_words'])
+    # # text['rate_noun'] = np.divide(text['noun_counts'] , text['num_words'])
+    # # text['rate_verb'] = np.divide(text['verb_counts'] , text['num_words'])
+    # # text['rate_propn'] = np.divide(text['propn_counts'], text['num_words'])
+    # # end = time.time()
+    # # print('Division time with numpy:', end - start)
+    # # # On several tries, Pandas was at least x5 times faster than numpy in this case
+    # # start = time.time()
+    # text['rate_pron'] = text['pron_counts'] / text['num_words']
+    # text['rate_adj'] = text['adj_counts'] / text['num_words']
+    # text['rate_adv'] = text['adv_counts'] / text['num_words']
+    # text['rate_noun'] = text['noun_counts'] / text['num_words']
+    # text['rate_verb'] = text['verb_counts'] / text['num_words']
+    # text['rate_propn'] = text['propn_counts'] / text['num_words']
+    # # end = time.time()
+    # # print('Division time with pandas:', end - start)
     
     # print( text['txt_lemmatized'] )
     # print( text['pron_counts'])
@@ -105,6 +116,5 @@ if __name__ == '__main__':
     # print( '----------------Palabras:--------------------' )
     # print( text['num_words'])
 
-    y_labels = data['Category']
-    test_pvalues(df=text, y_train=y_labels)
+
 

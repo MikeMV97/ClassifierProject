@@ -88,12 +88,11 @@ class Models:
 		# process all the pipelines in parallel using feature union
 		self.all_features = FeatureUnion([
 			# ('num_diff_words', self.num_diff_words),
-			('rate_words', self.rate_words),	# Este es el 1er candidato a retirar.
+			# ('rate_words', self.rate_words),	# Este es el 1er candidato a retirar.
 			('rate_diffwords', self.rate_diffwords),
 			('avg_word_length', self.avg_word_length),
-			('article_tfidf', self.article_tfidf)
+			('article_tfidf', self.article_tfidf),
 			#, ('sentiment_txt', self.sentiment_txt)
-			,
 			('rate_pron', self.rate_pron), 
 			# ('rate_adj', self.rate_adj), # Por Correlacion vs Categoria, se elimino
 			('rate_adv', self.rate_adv), 
@@ -103,34 +102,34 @@ class Models:
 		])
 
 		self.classifiers = {
-			'SVC': Pipeline([
-				('all_features', self.all_features),
-				('svc', SVC())
-				# {'all_features__article_tfidf__tfidf__analyzer': 'char_wb', 'all_features__article_tfidf__tfidf__max_df': 1.0,
-				# 'all_features__article_tfidf__tfidf__ngram_range': (8, 8), 'svc__C': 10, 'svc__coef0': 4, 'svc__degree': 5,
-				# 'svc__gamma': 'auto', 'svc__kernel': 'poly'}
-			]),
-			'KMEANS': Pipeline([
-				('all_features', self.all_features),
-				('kmeans', KMeans())
-			]),
-			'BAYES': Pipeline([
-				('all_features', self.all_features),
-				('to_dense', DenseTransformer()),
-				('naive_bayes', GaussianNB())
-			]),
-			'VOTING': Pipeline([
-				('all_features', self.all_features),
-				('clasfs', VotingClassifier(
-					estimators=[
-						('svc', SVC()), ('dtree', DecisionTreeClassifier()), ('gradient', GradientBoostingClassifier())
-					], voting='soft'))
-			]),
+			# 'SVC': Pipeline([
+			# 	('all_features', self.all_features),
+			# 	('svc', SVC())
+			# 	# {'all_features__article_tfidf__tfidf__analyzer': 'char_wb', 'all_features__article_tfidf__tfidf__max_df': 1.0,
+			# 	# 'all_features__article_tfidf__tfidf__ngram_range': (8, 8), 'svc__C': 10, 'svc__coef0': 4, 'svc__degree': 5,
+			# 	# 'svc__gamma': 'auto', 'svc__kernel': 'poly'}
+			# ]),
+			# 'KMEANS': Pipeline([
+			# 	('all_features', self.all_features),
+			# 	('kmeans', KMeans())
+			# ]),
+			# 'BAYES': Pipeline([
+			# 	('all_features', self.all_features),
+			# 	('to_dense', DenseTransformer()),
+			# 	('naive_bayes', GaussianNB())
+			# ]),
+			# 'VOTING': Pipeline([
+			# 	('all_features', self.all_features),
+			# 	('clasfs', VotingClassifier(
+			# 		estimators=[
+			# 			('svc', SVC()), ('dtree', DecisionTreeClassifier()), ('gradient', GradientBoostingClassifier())
+			# 		], voting='soft'))
+			# ]),
 			'VOTING2': Pipeline([
 				('all_features', self.all_features),
 				('clasfs', VotingClassifier(
 					estimators=[
-						(('svc1', SVC()), ('svc2', SVC()), ('svc3', SVC()))
+						('svc1', SVC()), ('svc2', SVC()), ('svc3', SVC())
 					], voting='soft'))
 			])
 		}
@@ -170,30 +169,30 @@ class Models:
 				'clasfs__svc__C': [0.5, 1, 5, 10],
 				'clasfs__svc__probability': [True],
 				'clasfs__dtree__min_samples_leaf': [1, 2],
-				'clasfs__gradient__n_estimators': [65, 90],
+				'clasfs__gradient__n_estimators': [65, 90]
 			},
 			'VOTING2': {
 				'all_features__article_tfidf__tfidf__analyzer': ['word'],
-				'all_features__article_tfidf__tfidf__max_df': [0.9, 0.8, 0.75],
-				'all_features__article_tfidf__tfidf__min_df': [1, 5, 10],
-				'all_features__article_tfidf__tfidf__ngram_range': [(1, 2), (2, 3)],
-				'clasfs__svc1__kernel': ['rbf', 'poly', 'linear'],
-				'clasfs__svc1__C': [3, 5, 7],
-				'clasfs__svc1__degree': [3, 4, 5],
+				'all_features__article_tfidf__tfidf__max_df': [0.9, 0.8],  # 0.75,
+				'all_features__article_tfidf__tfidf__min_df': [1, 3],  # , 5, 10
+				'all_features__article_tfidf__tfidf__ngram_range': [(1, 2)],  # , (2, 3)
+				'clasfs__svc1__kernel': ['poly'],
+				'clasfs__svc1__C': [10],
+				'clasfs__svc1__degree': [4, 5],
 				'clasfs__svc1__gamma': ['auto'],
-				'clasfs__svc1__coef0': [-2, 0, 2],
+				'clasfs__svc1__coef0': [4],  # , 0, 2
 				'clasfs__svc1__probability': [True],
-				'clasfs__svc2__kernel': ['rbf', 'poly', 'sigmoid'],
-				'clasfs__svc2__C': [3, 5, 7, 9],
-				'clasfs__svc2__degree': [2, 3, 4, 5],
+				'clasfs__svc2__kernel': ['rbf', 'poly'],
+				'clasfs__svc2__C': [5, 6],
+				'clasfs__svc2__degree': [5],
 				'clasfs__svc2__gamma': ['auto'], 
-				'clasfs__svc2__coef0': [-4, -2, 0, 2, 4],
+				'clasfs__svc2__coef0': [-4],  # , -2, 0, 2, 4
 				'clasfs__svc2__probability': [True],
-				'clasfs__svc3__kernel': ['rbf', 'linear', 'sigmoid'],
-				'clasfs__svc3__C': [4, 5, 6],
-				'clasfs__svc3__degree': [2, 3, 4],
+				'clasfs__svc3__kernel': ['linear'],
+				'clasfs__svc3__C': [3],
+				'clasfs__svc3__degree': [2, 3],
 				'clasfs__svc3__gamma': ['auto'], 
-				'clasfs__svc3__coef0': [-4, -2, 0, 2, 4],
+				'clasfs__svc3__coef0': [-4],  # , -2, 0, 2, 4
 				'clasfs__svc3__probability': [True]
 			}
 		}
