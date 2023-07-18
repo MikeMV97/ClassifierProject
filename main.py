@@ -67,9 +67,38 @@ def learning_pipeline():
 	# train_data.drop(columns=['Category'], inplace=True)
 	learner.pipeline_learning(train_data, train['Category'], test_data, test['Category'])
 
-
 	# model.grid_training(X, y)
 
+
+def generate_data_features():
+	loader = Loader()
+	util = Utils()
+	featHelper = FeaturesHelper()
+	learner = Models()
+
+	train = loader.load_from_csv('./in_data/train_data.csv')
+	test = loader.load_from_csv('./in_data/test_data.csv')
+	# loader.save_to_csv(train, './in_data/train_data.csv')
+	# loader.save_to_csv(test, './in_data/test_data.csv')
+	# X, y = util.features_target(data, ['Link'], ['Category'])
+
+	print('Datos de Entrenamiento:')
+	print('Dataset class counts: ', util.get_class_counts(train))
+	print('Dataset class proportions: ', util.get_class_proportions(train))
+	print('Datos de prueba:')
+	print('Dataset class counts: ', util.get_class_counts(test))
+	print('Dataset class proportions: ', util.get_class_proportions(test))
+	# print (test['Category'])
+	train_data = featHelper.add_features(train['article_text'])
+	test_data = featHelper.add_features(test['article_text'])
+
+	learner.model_export(train_data, './in_data/train_data-23jun.pkl')
+	learner.model_export(test_data, './in_data/test_data-23jun.pkl')
+	# train_data = learner.model_import('./in_data/train_data.pkl')
+	# test_data = learner.model_import('./in_data/test_data.pkl')
+
+
 if __name__ == '__main__':
-	learning_pipeline()
+	generate_data_features()
+	# learning_pipeline()
 	# test_model()

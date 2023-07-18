@@ -92,7 +92,7 @@ class Models:
 			('rate_diffwords', self.rate_diffwords),
 			('avg_word_length', self.avg_word_length),
 			('article_tfidf', self.article_tfidf),
-			#, ('sentiment_txt', self.sentiment_txt)
+			#, ('sentiment_txt', self.sentiment_txt) #https://huggingface.co/models?language=es&sort=downloads&search=sentiment
 			('rate_pron', self.rate_pron), 
 			# ('rate_adj', self.rate_adj), # Por Correlacion vs Categoria, se elimino
 			('rate_adv', self.rate_adv), 
