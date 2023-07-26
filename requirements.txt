@@ -2,7 +2,7 @@ bottleneck
 decouple
 flask
 gunicorn
-mkl-fft==1.0.6
+mkl-fft
 mkl-random
 mkl-service
 nltk
