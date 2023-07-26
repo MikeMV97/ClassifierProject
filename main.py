@@ -7,6 +7,7 @@ import json
 from flask import Flask, Response, request
 
 app = Flask(__name__)
+model = joblib.load('./models/SVC_model_0.8342.pkl')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -31,5 +32,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    model = joblib.load('./models/SVC_model_0.8342.pkl')
     app.run(port=8080)
